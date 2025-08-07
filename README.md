@@ -1,1 +1,1 @@
-# UROP-Inner-Solve-Convergence-for-ParaDiag-Schemes
+# UROP-Inner Solve Convergence for ParaDiag Schemes
