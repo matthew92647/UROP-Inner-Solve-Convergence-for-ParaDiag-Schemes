@@ -7,7 +7,9 @@ import numpy as np
 
 T = 2*math.pi
 mesh_dx = 40
-dt = T/300
+nt = 300
+dt = T/nt
+
 errs = []
 dts = []
 
@@ -54,7 +56,7 @@ for i in range(4):
 
     dq = Function(V)
     params = {'ksp_type': 'preonly', 'pc_type': 'lu'}
-    prob1 = LinearVariationalProblem(a, L1, dq)
+    prob1 = LinearVariationalProblem(a, L1, dq, constant_jacobian=True)
     solv1 = LinearVariationalSolver(prob1)
 
 
@@ -62,7 +64,7 @@ for i in range(4):
     step = 0 
     output_freq = 20
 
-    while t < T - 0.5*dt:
+    for i in range(nt):
         solv1.solve()
         q.assign(dq)
 
@@ -73,11 +75,13 @@ for i in range(4):
             qs.append(q.copy(deepcopy=True))
             print(f"t= {t}")
 
-    L2_err = sqrt(assemble((q-q_init)*(q - q_init) * dx))
-    L2_init = sqrt(assemble(q_init*q_init*dx))
+    L2_err = errornorm(q, q_init)
+    L2_init = norm(q_init)
+    
     errs.append(L2_err/L2_init)
     dts.append(dt)
-    dt = dt/2
+    nt = 2 * nt
+    dt = T/nt
     dtc.assign(dt)
     mesh_dx *= 2
     t = 0.0
