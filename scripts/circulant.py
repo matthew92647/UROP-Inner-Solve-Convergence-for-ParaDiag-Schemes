@@ -106,7 +106,6 @@ class BlockCirculantLinearOperatorInexact(spla.LinearOperator):
         self.shape = tuple((self.dim, self.dim))
         self.dtype = b1col.dtype
         self.tol = tol
-
         self.gamma = alpha**(np.arange(self.nt)/self.nt)
 
         eigvals1 = fft(b1col*self.gamma, norm='backward')
@@ -141,9 +140,15 @@ class BlockCirculantLinearOperatorInexact(spla.LinearOperator):
         y = self._block_solve(y)  # compute inexact solve for each block
         res_blocks = []
         for i in range(self.nt):
+            res_blocks.append(np.linalg.norm(self.blocks[i].dot(y[i]) - y_exact[i], np.inf)/np.linalg.norm(y_exact[i], np.inf))
+        self.res_blocks = res_blocks
+        res_blocks = []
+        for i in range(self.nt):
             res_blocks.append(self.blocks[i].dot(y[i]) - y_exact[i])
         res = np.vstack(res_blocks)
-        rel_res = np.linalg.norm(res, np.inf) / np.linalg.norm(y_exact, np.inf)
+        rel_res = np.linalg.norm(res, 2) / np.linalg.norm(y_exact, 2)
+        rel_res_inf = np.linalg.norm(res, np.inf) / np.linalg.norm(y_exact, np.inf)
         self.global_tol = rel_res
+        self.global_tol_inf = rel_res_inf
         y = self._from_eigvecs(y)
         return y.reshape(self.dim).real
