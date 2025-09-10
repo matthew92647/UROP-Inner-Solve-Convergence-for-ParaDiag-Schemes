@@ -51,7 +51,9 @@ L = sparse_circulant(gradient_stencil(2, order=2), nx)
 # Spatial terms                                                                                                                                                                               
 K = (u/dx)*D - (nu/dx**2)*L
 
-# Generate block matrices for different coefficients                                                                                                                                          
+# Generate block matrices for different coefficients 
+
+
 def block_matrix(l1, l2):                                                                                                                                                                     
     mat = l1*M + l2*K                                                                                                                                                                         
     mat.solve = spla.factorized(mat.tocsc())                                                                                                                                                  
@@ -101,18 +103,36 @@ q = q.reshape(nx*nt)
 rhs = rhs.reshape(nx*nt)
 
 alpha = 1e-4
+tol_range = np.logspace(-6, -1, 6)
 P_exact = BlockCirculantLinearOperatorExact(b1col, b2col, block_matrix, nx, alpha)
-P_inexact = BlockCirculantLinearOperatorInexact(b1col, b2col, block_matrix, nx, alpha, tol=1e-4)
-
 q_exact, niterations_exact, iterates_exact = modified_richardson(A, rhs, P_exact)
-q_inexact, niterations_inexact, iterates_inexact = modified_richardson(A, rhs, P_inexact)
+inexact_iterations = []
+residuals = []
+for tol in tol_range:
+    P_inexact = BlockCirculantLinearOperatorInexact(b1col, b2col, block_matrix, nx, alpha, tol=tol)
+    q_inexact, niterations_inexact, iterates_inexact = modified_richardson(A, rhs, P_inexact)
+    inexact_iterations.append(niterations_inexact)
+    residuals.append(iterates_inexact)
 
-print(f"Exact iteration count: {niterations_exact}, Inexact iteration count: {niterations_inexact}")
+print(f"Exact iteration count: {niterations_exact}")
 
 fig, ax = plt.subplots()
-ax.plot(iterates_exact, color='b')
-ax.plot(iterates_inexact, color='r')
+ax.plot(tol_range, inexact_iterations, color='b')
+ax.axhline(niterations_exact, color='r', linestyle='--')
 
+ax.set_xscale("log")
+
+ax.set_xlabel(r"$\tau$")
+ax.set_ylabel("Number of Iterations")
+
+plt.show()
+
+print(inexact_iterations)
+fig, ax = plt.subplots()
+for res in residuals:
+    ax.plot(res)
+ax.set_xlabel("Iteration Number")
+ax.set_ylabel('Residual')
 ax.set_yscale("log")
 
 plt.show()
