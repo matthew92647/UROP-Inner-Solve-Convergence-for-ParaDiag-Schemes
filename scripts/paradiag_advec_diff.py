@@ -11,6 +11,7 @@ from scipy import linalg
 from scipy.sparse import linalg as spla
 import matplotlib.pyplot as plt
 from numerical import modified_richardson
+from sklearn.linear_model import LinearRegression
 
 nt = 128
 nx = 128

@@ -163,10 +163,12 @@ for i in alpha_range:
 
 
 y_bound = nt/alpha_range * 1/(1 - alpha_range**(1/nt))
+y_bound2 = alpha_range **(-(nt-1)/nt) * (1-alpha_range) * 1/(1 - alpha_range**(1/nt))**2
 
 fig, ax = plt.subplots()
 ax.plot(alpha_range, ys, label='Numerical')
 ax.plot(alpha_range, y_bound, 'r--', label='Theoretical bound')
+ax.plot(alpha_range, y_bound2, 'g--')
 
 ax.set_xscale("log")
 ax.set_yscale("log")

@@ -145,8 +145,8 @@ for i in alpha_range:
     taus.append(check_tol)
     b_invs.append(max_norm)
     b_invs_2.append(max_norm_2)
-    ys.append(np.linalg.norm(exact_solve - inexact_solve, np.inf)/check_tol)
-    ys_2.append(np.linalg.norm(exact_solve - inexact_solve, 2)/check_tol)
+    ys.append(np.linalg.norm(exact_solve))
+    ys_2.append(np.linalg.norm(exact_solve - inexact_solve, 2))
     res_blocks.append(P_inexact.res_blocks)
     n = np.arange(1, nt+1)
     gamma = np.diag(alpha ** ((n-1)/nt))
@@ -162,11 +162,13 @@ for i in alpha_range:
     fourier_norms.append(V_norm * Vinv_norm)
 
 
-y_bound_2 = alpha_range**(-(nt-1)/nt) * 1/(1 - alpha_range**(1/nt))
-
+y_bound_2 = 0.001 * alpha_range**(-(nt-1)/nt) * 1/(1 - alpha_range**(1/nt))
+y_bound_approx = nt/alpha_range
 fig, ax = plt.subplots()
 ax.plot(alpha_range, ys_2, label='Numerical')
 ax.plot(alpha_range, y_bound_2, 'r--', label='Theoretical bound')
+ax.plot(alpha_range, y_bound_approx, 'g--', label=r"Approximate Bound $N/\alpha$")
+ax.plot(alpha_range, np.array(ys_2)/np.array(ys), 'y--')
 
 ax.set_xscale("log")
 ax.set_yscale("log")
