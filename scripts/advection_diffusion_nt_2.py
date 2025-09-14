@@ -51,6 +51,23 @@ L = sparse_circulant(gradient_stencil(2, order=2), nx)
 # Spatial terms
 K = (u/dx)*D - (nu/dx**2)*L
 
+I = sparse.identity(K.shape[0], format='csc')
+
+# Construct the matrix (I + dt*K)
+A = I + dt*K
+
+# Compute the inverse (dense) if small, or LU factorization
+A_lu = spla.splu(A.tocsc())
+
+# Apply the inverse to identity to get the inverse explicitly
+A_inv = A_lu.solve(np.eye(K.shape[0]))
+
+# Compute norms
+norm_inf = np.linalg.norm(A_inv, np.inf)
+norm_2 = np.linalg.norm(A_inv, 2)
+
+print("|| (I + dt K)^-1 ||_inf =", norm_inf)
+print("|| (I + dt K)^-1 ||_2   =", norm_2)
 
 # Generate block matrices for different coefficients
 def block_matrix(l1, l2):
@@ -136,7 +153,7 @@ for nt in nt_range:
     b_invs.append(max_norm)
     ys.append(np.linalg.norm(exact_solve - inexact_solve, 2)/check_tol)
 
-y_bound = alpha**(-(nt_range-1)/nt_range) * 1/(1 - alpha**(1/nt_range))
+y_bound = dt * alpha**(-(nt_range-1)/nt_range) * 1/(1 - alpha**(1/nt_range))
 y_bound_approx = nt_range/alpha
 
 fig, ax = plt.subplots()
@@ -145,8 +162,8 @@ ax.plot(nt_range, ys, label='Numerical')
 ax.plot(nt_range, y_bound, 'r--', label='Theoretical bound')
 ax.plot(nt_range, y_bound_approx, 'g--', label="Approximate Bound")
 
-ax.set_xscale("log", base=2)
-ax.set_yscale("log", base=2)
+ax.set_xscale("log")
+ax.set_yscale("log")
 
 ax.set_xlabel(r"$N_t$", fontsize=12)
 ax.set_ylabel(r"$\|\Delta w/\tau\|$", fontsize=12)
@@ -156,14 +173,14 @@ ax.legend()
 
 plt.show()
 
-theory_b_inv = 1/(1 - np.array(alpha)**(1/nt_range))
+theory_b_inv = dt/(1 - np.array(alpha)**(1/nt_range))
 
 fig, ax = plt.subplots()
 ax.plot(nt_range, b_invs, label='Measured')
 ax.plot(nt_range, theory_b_inv, 'r--', label='Theoretical bound')
 
-ax.set_xscale("log", base=2)
-ax.set_yscale("log", base=2)
+ax.set_xscale("log")
+ax.set_yscale("log")
 
 ax.set_xlabel(r"$N_t$", fontsize=12)
 ax.set_ylabel(r"$\|B^{-1}\|$", fontsize=12)

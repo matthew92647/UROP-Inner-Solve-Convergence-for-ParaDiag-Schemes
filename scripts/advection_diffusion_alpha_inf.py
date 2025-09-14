@@ -17,7 +17,7 @@ nx = 128
 lx = 2*pi
 dx = lx/nx
 
-theta = 0.55
+theta = 1.0
 
 # velocity, CFL, and reynolds number
 u = 1
@@ -50,6 +50,23 @@ L = sparse_circulant(gradient_stencil(2, order=2), nx)
 # Spatial terms
 K = (u/dx)*D - (nu/dx**2)*L
 
+I = sparse.identity(K.shape[0], format='csc')
+
+# Construct the matrix (I + dt*K)
+A = I + dt*K
+
+# Compute the inverse (dense) if small, or LU factorization
+A_lu = spla.splu(A.tocsc())
+
+# Apply the inverse to identity to get the inverse explicitly
+A_inv = A_lu.solve(np.eye(K.shape[0]))
+
+# Compute norms
+norm_inf = np.linalg.norm(A_inv, np.inf)
+norm_2 = np.linalg.norm(A_inv, 2)
+
+print("|| (I + dt K)^-1 ||_inf =", norm_inf)
+print("|| (I + dt K)^-1 ||_2   =", norm_2)
 
 # Generate block matrices for different coefficients
 def block_matrix(l1, l2):
@@ -162,7 +179,7 @@ for i in alpha_range:
     fourier_norms.append(V_norm * Vinv_norm)
 
 
-y_bound = nt/alpha_range * 1/(1 - alpha_range**(1/nt))
+y_bound = nt * dt /alpha_range * 1/(1 - alpha_range**(1/nt))
 y_bound2 = alpha_range **(-(nt-1)/nt) * (1-alpha_range) * 1/(1 - alpha_range**(1/nt))**2
 
 fig, ax = plt.subplots()
@@ -181,7 +198,8 @@ ax.legend()
 
 plt.show()
 
-theory_b_inv = 1/(1 - np.array(alpha_range)**(1/nt))
+
+theory_b_inv = dt/(1 - np.array(alpha_range)**(1/nt))
 
 fig, ax = plt.subplots()
 ax.plot(alpha_range, b_invs, label='Measured')
@@ -196,6 +214,12 @@ ax.set_title("Comparison of measured vs bound (inverse matrix, inf norm)", fonts
 
 ax.legend()
 
+plt.show()
+
+fig, ax = plt.subplots()
+ax.plot(alpha_range, np.abs((theory_b_inv - np.array(b_invs))/theory_b_inv))
+ax.set_xscale("log")
+ax.set_yscale("log")
 plt.show()
 
 
@@ -221,3 +245,4 @@ ax.plot(alpha_range, np.array(b_invs) * np.array(fourier_norms)/np.array(ys))
 ax.set_xscale('log')
 ax.set_yscale('log')
 plt.show()
+

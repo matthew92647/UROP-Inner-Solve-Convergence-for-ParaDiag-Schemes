@@ -7,11 +7,11 @@ def modified_richardson(A, b, P, omega=1.0, tol=1e-5, maxiter=1000):
     """
     x = np.zeros_like(b)
     r = b - A @ x
-    iterates = [x]
+    iterates = [x.copy()]
     residuals = [np.linalg.norm(P@r, np.inf)/np.linalg.norm(b, np.inf)]
     for k in range(maxiter):
         x += omega * (P @ r)
-        iterates.append(x)
+        iterates.append(x.copy())
         r = b - A @ x
         pre_res = P @ r
         residuals.append(np.linalg.norm(pre_res, np.inf)/np.linalg.norm(b, np.inf))

@@ -50,6 +50,23 @@ L = sparse_circulant(gradient_stencil(2, order=2), nx)
 # Spatial terms
 K = - (nu/dx**2)*L
 
+I = sparse.identity(K.shape[0], format='csc')
+
+# Construct the matrix (I + dt*K)
+A = I + dt*K
+
+# Compute the inverse (dense) if small, or LU factorization
+A_lu = spla.splu(A.tocsc())
+
+# Apply the inverse to identity to get the inverse explicitly
+A_inv = A_lu.solve(np.eye(K.shape[0]))
+
+# Compute norms
+norm_inf = np.linalg.norm(A_inv, np.inf)
+norm_2 = np.linalg.norm(A_inv, 2)
+
+print("|| (I + dt K)^-1 ||_inf =", norm_inf)
+print("|| (I + dt K)^-1 ||_2   =", norm_2)
 
 # Generate block matrices for different coefficients
 def block_matrix(l1, l2):

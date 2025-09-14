@@ -105,15 +105,18 @@ rhs = rhs.reshape(nx*nt)
 
 alpha = 1e-4
 tol_range = np.logspace(-6, -1, 6)
+
 P_exact = BlockCirculantLinearOperatorExact(b1col, b2col, block_matrix, nx, alpha)
-q_exact, niterations_exact, iterates_exact = modified_richardson(A, rhs, P_exact)
+q_exact, niterations_exact, residuals_exact, _ = modified_richardson(A, rhs, P_exact)
 inexact_iterations = []
+inexact_iterates = []
 residuals = []
 for tol in tol_range:
     P_inexact = BlockCirculantLinearOperatorInexact(b1col, b2col, block_matrix, nx, alpha, tol=tol)
-    q_inexact, niterations_inexact, iterates_inexact = modified_richardson(A, rhs, P_inexact)
+    q_inexact, niterations_inexact, residuals_inexact, iterates_inexact = modified_richardson(A, rhs, P_inexact)
     inexact_iterations.append(niterations_inexact)
-    residuals.append(iterates_inexact)
+    inexact_iterates.append(iterates_inexact)
+    residuals.append(residuals_inexact)
 
 print(f"Exact iteration count: {niterations_exact}")
 
@@ -128,12 +131,36 @@ ax.set_ylabel("Number of Iterations")
 
 plt.show()
 
-print(inexact_iterations)
+print("Inexact iterations:", inexact_iterations)
 fig, ax = plt.subplots()
 for res in residuals:
     ax.plot(res)
 ax.set_xlabel("Iteration Number")
 ax.set_ylabel('Residual')
+ax.set_yscale("log")
+
+plt.show()
+
+# Fitting regression line to residuals to determine convergence rate
+for res in residuals:
+    r_0 = res[0]
+    
+
+
+# Plots using Errors instead of Residuals
+errs = []
+A_mat = sparse.kron(B1, M) + sparse.kron(B2, K)
+exact = spla.spsolve(A_mat, rhs)
+for iterates in inexact_iterates:
+    errs_iterate = []
+    for iter in iterates:
+        errs_iterate.append(np.linalg.norm(iter - exact, 2))
+    errs.append(errs_iterate)
+fig, ax = plt.subplots()
+for err in errs:
+    ax.plot(err)
+ax.set_xlabel("Iteration number")
+ax.set_ylabel("Error")
 ax.set_yscale("log")
 
 plt.show()

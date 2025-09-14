@@ -50,6 +50,22 @@ L = sparse_circulant(gradient_stencil(2, order=2), nx)
 # Spatial terms
 K = - (nu/dx**2)*L
 
+I = sparse.identity(K.shape[0], format='csc')
+
+
+A = I + dt*K
+
+A_lu = spla.splu(A.tocsc())
+
+
+A_inv = A_lu.solve(np.eye(K.shape[0]))
+
+# Compute norms
+norm_inf = np.linalg.norm(A_inv, np.inf)
+norm_2 = np.linalg.norm(A_inv, 2)
+
+print("|| (I + dt K)^-1 ||_inf =", norm_inf)
+print("|| (I + dt K)^-1 ||_2   =", norm_2)
 
 # Generate block matrices for different coefficients
 def block_matrix(l1, l2):
@@ -162,7 +178,7 @@ for i in alpha_range:
     fourier_norms.append(V_norm * Vinv_norm)
 
 
-y_bound_2 = alpha_range**(-(nt-1)/nt) * 1/(1 - alpha_range**(1/nt))
+y_bound_2 = dt * alpha_range**(-(nt-1)/nt) * 1/(1 - alpha_range**(1/nt))
 
 fig, ax = plt.subplots()
 ax.plot(alpha_range, ys_2, label='Numerical')
@@ -180,7 +196,7 @@ ax.legend()
 plt.show()
 
 
-theory_b_inv = 1/(1 - np.array(alpha_range)**(1/nt))
+theory_b_inv = dt/(1 - np.array(alpha_range)**(1/nt))
 
 
 fig, ax = plt.subplots()
@@ -196,4 +212,11 @@ ax.set_title("Comparison of measured vs bound (inverse matrix, 2 norm)", fontsiz
 
 ax.legend()
 
+plt.show()
+
+fig, ax = plt.subplots()
+ax.plot(alpha_range, np.abs(theory_b_inv - np.array(b_invs_2))/theory_b_inv)
+
+ax.set_xscale("log")
+ax.set_yscale("log")
 plt.show()
