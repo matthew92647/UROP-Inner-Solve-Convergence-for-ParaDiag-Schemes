@@ -9,7 +9,7 @@ import numpy as np
 from scipy.sparse import linalg as spla
 from scipy import sparse
 
- 
+
 nt = 128
 nx = 128
 

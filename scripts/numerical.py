@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def modified_richardson(A, b, P, omega=1.0, tol=1e-5, maxiter=1000):
+def modified_richardson(A, b, P, omega=1.0, tol=1e-8, maxiter=1000):
     """
     Modified Richardson iteration for Ax = b with preconditioner P.
     """

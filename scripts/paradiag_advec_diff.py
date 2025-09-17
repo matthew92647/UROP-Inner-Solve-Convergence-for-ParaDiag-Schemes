@@ -128,6 +128,7 @@ ax.set_xscale("log")
 
 ax.set_xlabel(r"$\tau$")
 ax.set_ylabel("Number of Iterations")
+ax.set_title(r"Iteration count for varying $\tau$")
 
 plt.show()
 
@@ -138,16 +139,53 @@ for res in residuals:
 ax.set_xlabel("Iteration Number")
 ax.set_ylabel('Residual')
 ax.set_yscale("log")
+ax.set_title(r"Residuals for varying $\tau$")
 
 plt.show()
 
 # Fitting regression line to residuals to determine convergence rate
+convergence_rates = []
+approx_lines = []
 for res in residuals:
     r_0 = res[0]
-    
+    y = np.log(np.array(res))
+    x = np.arange(0, len(res)).reshape(-1, 1)
 
+    model = LinearRegression()
+    model.fit(x, y)
+    y_pred = model.predict(x)
+    convergence_rates.append(model.coef_[0])
+    approx_lines.append(y_pred)
 
-# Plots using Errors instead of Residuals
+fig, ax = plt.subplots()
+for i in range(len(residuals)):
+    ax.plot(residuals[i])
+    ax.plot(np.exp(approx_lines[i]))
+
+ax.set_xlabel("Iteration Number")
+ax.set_ylabel('Residual')
+ax.set_yscale("log")
+plt.show()
+
+# Testing theoretical convergence rate vs numerical
+A_mat = sparse.kron(B1, M) + sparse.kron(B2, K)
+u, s, vt = spla.svds(A_mat, k=1)   
+A_norm_2 = s.max()
+bound = alpha/(1 - alpha) + tol_range * dt * alpha**(-(nt-1)/nt) * 1/(1 - alpha**(1/nt)) 
+
+fig, ax = plt.subplots()
+ax.plot(tol_range, np.exp(convergence_rates))
+ax.axhline(alpha/(1-alpha), color="r", label=r"Exact $\alpha/1-\alpha$")
+#ax.plot(tol_range, bound, 'r--', label="Theoretical convergence rate")
+ax.set_ylabel("Convergence rate")
+ax.set_xlabel(r"$\tau$")
+ax.set_xscale("log")
+#ax.set_yscale("log")
+ax.set_title(r"Convergence rate for varying $\tau$")
+
+plt.show()
+
+# Plotting errors instead of residuals
 errs = []
 A_mat = sparse.kron(B1, M) + sparse.kron(B2, K)
 exact = spla.spsolve(A_mat, rhs)
